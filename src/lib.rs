@@ -241,12 +241,18 @@ fn todo_view(
                 Ev::DblClick,
                 enc!((todo_item_id) move |_| Msg::StartTodoEdit(todo_item_id))
             ),
-            &todo_item.title
+            &todo_item.title,
+            
         ],
         button![
             C!["removeTodoButton"],
-            ["X"],
+            ["Remove Task"],
             ev(Ev::Click, enc!((todo_item_id) move |_| Msg::RemoveTodoItem(todo_item_id)))
+        ],
+        button![
+            C!["startEditButton"],
+            ["Edit Task"],
+            ev(Ev::Click, enc!((todo_item_id) move |_| Msg::StartTodoEdit(todo_item_id)))
         ],
         match editing_todo_item {
             Some(editing_todo_item) if &editing_todo_item.id == todo_item_id => {
