@@ -6,7 +6,6 @@ use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 use web_sys::HtmlInputElement;
 
-
 //---------------------------------------
 //               Structs
 //---------------------------------------
@@ -40,6 +39,7 @@ struct TodoItem {
     completed: bool,
 }
 
+
 #[derive(Serialize, Deserialize)]
 struct EditingTodoItem {
     id: TodoItemId,
@@ -53,7 +53,26 @@ struct EditingTodoItem {
 
 #[derive(Clone)]
 enum Msg {
+    //~~~~~~~~~~~~~~
+    //  General
+    //~~~~~~~~~~~~~~
     //ChangeText(String),
+    NewTodoTitleUpdated(String),
+    ClearEntireTodoList,
+
+    //~~~~~~~~~~~~~~
+    //  SingleTodo
+    //~~~~~~~~~~~~~~
+    CreateNewTodoItem,
+    RemoveTodoItem(TodoItemId),
+
+    //~~~~~~~~~~~~~~
+    //  EditTodo
+    //~~~~~~~~~~~~~~
+    StartTodoEdit(TodoItemId),
+    EditingTodoTitleUpdated(String),
+    SaveEditingTodo,
+    CancelTodoEdit,
 }
 
 fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg>) {
