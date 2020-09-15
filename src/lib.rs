@@ -200,7 +200,12 @@ fn header_view(new_todo_name: &str) -> Node<Msg> {
         button![
             C!["addTodoButton"],
             ["Add New To Do"],
-            ev(Ev::Click, enc!((new_todo_name) move |_| Msg::CreateNewTodoItem))
+            ev(Ev::Click, |_| Msg::CreateNewTodoItem)
+        ],
+        button![
+            C!["clearTodoListButton"],
+            ["Clear List"],
+            ev(Ev::Click, |_| Msg::ClearEntireTodoList),
         ]
     ]
 }
@@ -248,7 +253,7 @@ fn todo_view(
             C!["removeTodoButton"],
             ["X"],
             ev(Ev::Click, enc!((todo_item_id) move |_| Msg::RemoveTodoItem(todo_item_id)))
-        ]
+        ],
     ]
 }
 
