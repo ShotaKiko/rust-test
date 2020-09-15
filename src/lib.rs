@@ -7,6 +7,11 @@ use serde::{Deserialize, Serialize};
 use web_sys::HtmlInputElement;
 
 use std::mem;
+const ENTER_KEY: u32 = 13;
+const ESC_KEY: u32 = 27;
+use enclose::enc;
+
+const STORAGE_KEY: &str = "LVT-Rust&Seed-Test"; //for storing list in localstorage
 
 //---------------------------------------
 //               Structs
@@ -58,7 +63,6 @@ enum Msg {
     //~~~~~~~~~~~~~~
     //  General
     //~~~~~~~~~~~~~~
-    //ChangeText(String),
     NewTodoTitleUpdated(String),
     ClearEntireTodoList,
 
@@ -83,7 +87,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
     match msg {
     //__________General_______________
-        // ChangeText(new_text) => model.text_to_show = new_text,
         NewTodoTitleUpdated(name) => {
             data.new_todo_name = name
         }
@@ -142,23 +145,138 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             data.editing_todo_item = None;
         }
     }
+    LocalStorage::insert(STORAGE_KEY, &data).expect("Save to do list data to local storage.")
 }
 
-fn view(model: &Model) -> Node<Msg> {
-    div![
-        input![
-            attrs! {
-                At::Placeholder => "Enter some text..."
-            },
-            // input_ev(Ev::Input, Msg::ChangeText),
-        ],
-        // div![&model.text_to_show]
+//---------------------------------------
+//          View and subViews
+//---------------------------------------
+
+//________________Overall Container View_________________
+fn view(model: &Model) -> impl IntoNodes<Msg> {
+    let data = &model.todo_data;
+
+    nodes![
+        header_view(&data.new_todo_name),
+        if data.todo_list.is_empty() {
+            vec![]
+        } else {
+            vec![
+                content_view(
+                    &data.todo_list,
+                    &data.editing_todo_item,
+                    &model.todo_ref.editing_todo_input,
+                ),
+            ]
+        }
     ]
 }
 
+//________________Header View_________________
+
+fn header_view(new_todo_name: &str) -> Node<Msg> {
+    header![
+        C!["header"],
+        h1!["To Do List"],
+        input![
+            C!["newTodo"],
+            attrs! {
+                At::AutoFocus => true.as_at_value();
+                At::Placeholder => "What glorious task should we complete next?";
+                At::Value => new_todo_name;
+            },
+        keyboard_ev(Ev::KeyDown, |keyboard_event| {
+            IF!(keyboard_event.key_code() == ENTER_KEY => Msg::CreateNewTodoItem)
+        }),
+        input_ev(Ev::Input, Msg::NewTodoTitleUpdated)
+        ],
+        button![
+            C!["addTodoButton"],
+            ["Add New To Do"],
+            ev(Ev::Click, |_| Msg::CreateNewTodoItem)
+        ],
+        button![
+            C!["clearTodoListButton"],
+            ["Clear List"],
+            ev(Ev::Click, |_| Msg::ClearEntireTodoList),
+        ]
+    ]
+}
+
+//________________Content View__________________
+
+fn content_view(
+    todo_list: &IndexMap<TodoItemId, TodoItem>,
+    editing_todo_item: &Option<EditingTodoItem>,
+    editing_todo_input: &ElRef<HtmlInputElement>,
+) -> Node<Msg> {
+    section![
+        C!["contentContainer"],
+        ul![
+            C!["todoList"],
+            todo_list.iter().filter_map(|(todo_item_id, todo_item)| {
+                let show_all = true; //could modify for showing filtered list
+
+                IF!(show_all => todo_view(todo_item_id, todo_item, editing_todo_item, editing_todo_input))
+            })
+        ]
+    ]
+}
+
+//________________Todo Item View__________________
+
+#[allow(clippy::cognitive_complexity)]
+fn todo_view(
+    todo_item_id: &TodoItemId,
+    todo_item: &TodoItem,
+    editing_todo_item: &Option<EditingTodoItem>,
+    editing_todo_input: &ElRef<HtmlInputElement>,
+) -> Node<Msg> {
+    li![
+        C![
+            IF!(matches!(editing_todo_item, Some(editing_todo_item) if &editing_todo_item.id == todo_item_id) => "editing"),
+        ],
+        label![
+            ev(
+                Ev::DblClick,
+                enc!((todo_item_id) move |_| Msg::StartTodoEdit(todo_item_id))
+            ),
+            &todo_item.title
+        ],
+        button![
+            C!["removeTodoButton"],
+            ["X"],
+            ev(Ev::Click, enc!((todo_item_id) move |_| Msg::RemoveTodoItem(todo_item_id)))
+        ],
+        match editing_todo_item {
+            Some(editing_todo_item) if &editing_todo_item.id == todo_item_id => {
+                input![
+                    el_ref(editing_todo_input),
+                    C!["editInputField"],
+                    attrs! {At::Value => editing_todo_item.title},
+                    ev(Ev::Blur, |_| Msg::SaveEditingTodo),
+                    input_ev(Ev::Input, Msg::EditingTodoTitleUpdated),
+                    keyboard_ev(Ev::KeyDown, |keyboard_event| {
+                        match keyboard_event.key_code() {
+                            ENTER_KEY => Some(Msg::SaveEditingTodo),
+                            ESC_KEY => Some(Msg::CancelTodoEdit),
+                            _ => None,
+                        }
+                    }),
+                ]
+            }
+            _ => empty![],
+        }
+    ]
+}
+
+//---------------------------------------
+//          Initialization
+//---------------------------------------
+
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
     Model {
-        todo_data: TodoData::default(),
+        todo_data: LocalStorage::get(STORAGE_KEY).unwrap_or_default(), //defaults to Todo Default if not found
         todo_ref: TodoReference::default()
     }
 }
