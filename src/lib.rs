@@ -8,6 +8,7 @@ use web_sys::HtmlInputElement;
 
 use std::mem;
 const ENTER_KEY: u32 = 13;
+const ESC_KEY: u32 = 27;
 use enclose::enc;
 
 //---------------------------------------
@@ -232,6 +233,7 @@ fn content_view(
 
 //________________Todo Item View__________________
 
+#[allow(clippy::cognitive_complexity)]
 fn todo_view(
     todo_item_id: &TodoItemId,
     todo_item: &TodoItem,
@@ -254,6 +256,25 @@ fn todo_view(
             ["X"],
             ev(Ev::Click, enc!((todo_item_id) move |_| Msg::RemoveTodoItem(todo_item_id)))
         ],
+        match editing_todo_item {
+            Some(editing_todo_item) if &editing_todo_item.id == todo_item_id => {
+                input![
+                    el_ref(editing_todo_input),
+                    C!["editInputField"],
+                    attrs! {At::Value => editing_todo_item.title},
+                    ev(Ev::Blur, |_| Msg::SaveEditingTodo),
+                    input_ev(Ev::Input, Msg::EditingTodoTitleUpdated),
+                    keyboard_ev(Ev::KeyDown, |keyboard_event| {
+                        match keyboard_event.key_code() {
+                            ENTER_KEY => Some(Msg::SaveEditingTodo),
+                            ESC_KEY => Some(Msg::CancelTodoEdit),
+                            _ => None,
+                        }
+                    }),
+                ]
+            }
+            _ => empty![],
+        }
     ]
 }
 
