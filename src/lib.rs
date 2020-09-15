@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use web_sys::HtmlInputElement;
 
 use std::mem;
+const ENTER_KEY: u32 = 13;
 
 //---------------------------------------
 //               Structs
@@ -144,17 +145,54 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-fn view(model: &Model) -> Node<Msg> {
-    div![
-        input![
-            attrs! {
-                At::Placeholder => "Enter some text..."
-            },
+//---------------------------------------
+//          View and subViews
+//---------------------------------------
+
+fn view(model: &Model) -> impl IntoNodes<Msg> {
+    let data = &model.todo_data;
+    // div![
+    //     input![
+    //         attrs! {
+    //             At::Placeholder => "Enter some text..."
+    //         },
             // input_ev(Ev::Input, Msg::ChangeText),
-        ],
+        // ],
         // div![&model.text_to_show]
+    // ]
+
+    nodes![
+        header_view(&data.new_todo_name),
+        //other sub views will follow header
     ]
 }
+
+//__________Header View___________
+fn header_view(new_todo_name: &str) -> Node<Msg> {
+    header![
+        C!["header"],
+        h1!["To Do List"],
+        input![
+            C!["newTodo"],
+            attrs! {
+                At::AutoFocus => true.as_at_value();
+                At::Placeholder => "What glorious task should we complete next?";
+                At::Value => new_todo_name;
+            },
+        keyboard_ev(Ev::KeyDown, |keyboard_event| {
+            IF!(keyboard_event.key_code() == ENTER_KEY => Msg::CreateNewTodoItem)
+        }),
+        input_ev(Ev::Input, Msg::NewTodoTitleUpdated)
+        ]
+    ]
+}
+
+
+
+
+//---------------------------------------
+//          Initialization
+//---------------------------------------
 
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
     Model {
