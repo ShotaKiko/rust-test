@@ -11,6 +11,8 @@ const ENTER_KEY: u32 = 13;
 const ESC_KEY: u32 = 27;
 use enclose::enc;
 
+const STORAGE_KEY: &str = "LVT-Rust&Seed-Test";
+
 //---------------------------------------
 //               Structs
 //---------------------------------------
@@ -145,6 +147,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             data.editing_todo_item = None;
         }
     }
+    LocalStorage::insert(STORAGE_KEY, &data).expect("Save to do list data to local storage.")
 }
 
 //---------------------------------------
@@ -284,7 +287,7 @@ fn todo_view(
 
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
     Model {
-        todo_data: TodoData::default(),
+        todo_data: LocalStorage::get(STORAGE_KEY).unwrap_or_default(), //defaults to Todo Default if not found
         todo_ref: TodoReference::default()
     }
 }
