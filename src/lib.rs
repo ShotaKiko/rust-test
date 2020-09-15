@@ -11,7 +11,7 @@ const ENTER_KEY: u32 = 13;
 const ESC_KEY: u32 = 27;
 use enclose::enc;
 
-const STORAGE_KEY: &str = "LVT-Rust&Seed-Test";
+const STORAGE_KEY: &str = "LVT-Rust&Seed-Test"; //for storing list in localstorage
 
 //---------------------------------------
 //               Structs
@@ -63,7 +63,6 @@ enum Msg {
     //~~~~~~~~~~~~~~
     //  General
     //~~~~~~~~~~~~~~
-    //ChangeText(String),
     NewTodoTitleUpdated(String),
     ClearEntireTodoList,
 
@@ -88,7 +87,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
     match msg {
     //__________General_______________
-        // ChangeText(new_text) => model.text_to_show = new_text,
         NewTodoTitleUpdated(name) => {
             data.new_todo_name = name
         }
@@ -157,15 +155,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 //________________Overall Container View_________________
 fn view(model: &Model) -> impl IntoNodes<Msg> {
     let data = &model.todo_data;
-    // div![
-    //     input![
-    //         attrs! {
-    //             At::Placeholder => "Enter some text..."
-    //         },
-            // input_ev(Ev::Input, Msg::ChangeText),
-        // ],
-        // div![&model.text_to_show]
-    // ]
 
     nodes![
         header_view(&data.new_todo_name),
@@ -226,7 +215,7 @@ fn content_view(
         ul![
             C!["todoList"],
             todo_list.iter().filter_map(|(todo_item_id, todo_item)| {
-                let show_all = true; //modify for showing filtered list
+                let show_all = true; //could modify for showing filtered list
 
                 IF!(show_all => todo_view(todo_item_id, todo_item, editing_todo_item, editing_todo_input))
             })
